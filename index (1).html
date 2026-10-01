@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Buddy-Programm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Farben: hier später die genauen Stipendiums-Farbcodes eintragen ===== */
+:root{
+  --blue:#1C3F94;        /* Stipendium Blau */
+  --blue-deep:#132B66;   /* dunkleres Blau für den Kopfbereich */
+  --yellow:#F7C62F;      /* Stipendium Gelb */
+
+  --paper:#F6F8FC; --surface:#FFFFFF; --ink:#17213A; --muted:#5A6580; --line:#D8DEEB;
+  --blue-soft:#E6ECFA; --yellow-soft:#FFF4D1; --danger:#B3261E;
+  --primary:var(--blue); --on-primary:#fff; --link:var(--blue); --bar:var(--blue);
+  --font-head:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1426; --surface:#172039; --ink:#EDF1FA; --muted:#A5B0C8; --line:#2A3556;
+    --blue-soft:#1D2A50; --yellow-soft:#3A3113; --danger:#FF8A80;
+    --primary:#3D66D6; --link:#9DB7FF; --bar:#7FA2FF;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1426; --surface:#172039; --ink:#EDF1FA; --muted:#A5B0C8; --line:#2A3556;
+  --blue-soft:#1D2A50; --yellow-soft:#3A3113; --danger:#FF8A80;
+  --primary:#3D66D6; --link:#9DB7FF; --bar:#7FA2FF;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:920px;margin:0 auto;padding:0 20px}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+
+/* Kopfbereich */
+.top{background:var(--blue-deep);color:#fff}
+.brand{display:flex;align-items:center;gap:14px;padding:28px 0 22px}
+.brand svg{flex:none}
+.brand h1{font-family:var(--font-head);font-weight:800;font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.1;margin:0;letter-spacing:-.01em}
+.brand p{margin:2px 0 0;color:#C9D4F2;font-size:.95rem}
+.top{border-bottom:5px solid var(--yellow)}
+.brand{flex-wrap:wrap;padding-bottom:26px}
+.userbar{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.userbar .who{color:#DCE4FA;font-size:.95rem}
+.userbar .btn{background:transparent;border-color:rgba(255,255,255,.45);color:#fff}
+
+/* Anmeldung */
+.auth{max-width:540px;margin:0 auto}
+.auth .card+.card,.auth form+.card{margin-top:16px}
+.auth h3{font-family:var(--font-head);font-size:1.2rem;margin:0 0 4px}
+.rolechoice{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.rolebtn{font:inherit;text-align:left;border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:14px;padding:16px;cursor:pointer}
+.rolebtn:hover{border-color:var(--blue)}
+.rolebtn strong{display:block;font-family:var(--font-head);font-size:1.1rem;margin-top:10px}
+.rolebtn span.muted{font-size:.9rem}
+.mailsim{border:2px dashed var(--line);background:transparent}
+.mailsim p{margin:0 0 12px}
+.linkbtn{font:inherit;background:none;border:0;padding:0;color:var(--link);text-decoration:underline;cursor:pointer}
+.testacc{margin-top:18px;font-size:.92rem;color:var(--muted)}
+.testacc summary{cursor:pointer;font-weight:700;color:var(--link)}
+.testacc ul{padding-left:1.2em}
+.back{margin-bottom:16px}
+@media (max-width:520px){.rolechoice{grid-template-columns:1fr}}
+
+main{padding:28px 0 64px}
+.intro h2{font-family:var(--font-head);font-size:clamp(1.5rem,3.5vw,2rem);line-height:1.15;margin:0 0 6px}
+.intro p{margin:0 0 20px;max-width:62ch;color:var(--muted)}
+h2.sub{font-family:var(--font-head);font-size:1.35rem;margin:40px 0 12px}
+.muted{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+
+/* Eingaben & Buttons */
+select,input[type=text],input[type=email],input[type=number]{font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;min-width:0;width:100%}
+.btn{font:inherit;font-weight:700;border:2px solid var(--primary);background:var(--primary);color:var(--on-primary);padding:9px 18px;border-radius:999px;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--link);border-color:var(--line)}
+.btn.small{padding:6px 14px;font-size:.92rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.loginbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.loginbar label{font-weight:700}
+.loginbar select{flex:1 1 220px;width:auto}
+.or{color:var(--muted)}
+.hint{font-size:.88rem;color:var(--muted);margin:8px 2px 24px}
+
+/* Kreise mit Initialen */
+.avatars{display:flex;flex:none}
+.av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-head);font-weight:800;font-size:1rem;border:3px solid var(--surface);flex:none}
+.av.sm{width:36px;height:36px;font-size:.8rem;border-width:2px}
+.av.y{background:var(--yellow);color:#17213A}
+.av.b{background:var(--blue);color:#fff}
+.av.empty{background:var(--surface);border:3px dashed var(--line);color:var(--muted)}
+.avatars .av+.av{margin-left:-14px}
+.avatars .av.sm+.av.sm{margin-left:-10px}
+.avatars.big .av{width:84px;height:84px;font-size:1.5rem;border-width:4px}
+.avatars.big .av+.av{margin-left:-22px}
+
+/* Status-Karten */
+.status{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.status>div:last-child{flex:1 1 280px}
+.status h3{font-family:var(--font-head);font-size:1.4rem;margin:0 0 6px;line-height:1.2}
+.status p{margin:0 0 10px}
+.status.found{background:var(--yellow-soft);border:2px solid var(--yellow)}
+.status.found .av{border-color:var(--yellow-soft)}
+.common{margin:4px 0 14px;padding-left:1.2em}
+.buddy-list{display:grid;gap:12px;margin-top:12px}
+
+/* Formular */
+.form h3{font-family:var(--font-head);font-size:1.3rem;margin:0 0 16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label,legend{font-weight:700}
+fieldset{border:0;padding:0;margin:20px 0 0}
+legend{margin-bottom:8px;padding:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-block;padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);cursor:pointer;background:var(--surface)}
+.chip input:checked+span{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip input:focus-visible+span{outline:3px solid var(--yellow);outline-offset:2px}
+.langpick{display:flex;gap:8px;max-width:460px}
+.langpick input{flex:1}
+#langchips{margin-top:10px}
+#langchips:empty{display:none}
+.lchip{display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 14px;border-radius:999px;background:var(--blue);color:#fff}
+.lchip button{border:0;background:rgba(255,255,255,.22);color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:1rem;line-height:1;display:grid;place-items:center}
+.radios{display:flex;flex-wrap:wrap;gap:8px 20px}
+.consent{display:flex;gap:10px;align-items:flex-start;margin-top:22px;font-size:.95rem}
+.consent input{margin-top:5px}
+.err{color:var(--danger);font-size:.88rem;margin:4px 0 0}
+.actions{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+.narrow{margin-top:20px;max-width:420px}
+@media (max-width:640px){.grid{grid-template-columns:1fr}}
+
+/* Admin */
+.toolbar{margin:0 0 16px}
+.nrow{margin-bottom:14px}
+.nhead{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.nhead h3{margin:0;font-size:1.1rem}
+.nhead p{margin:0}
+.cands{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cand{display:flex;gap:14px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--paper);border:1.5px solid transparent}
+.cand.rec{border-color:var(--yellow);background:var(--yellow-soft)}
+.cmain{flex:1;min-width:0}
+.cname{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{font-size:.8rem;font-weight:700;background:var(--yellow);color:#17213A;padding:2px 10px;border-radius:999px}
+.scoreline{display:flex;align-items:center;gap:10px;margin:8px 0 4px}
+.bar{flex:1;max-width:260px;height:8px;border-radius:4px;background:var(--blue-soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--bar)}
+.pct{font-weight:700;font-variant-numeric:tabular-nums;min-width:3.2em}
+.why{margin:0;font-size:.9rem;color:var(--muted)}
+@media (max-width:560px){.cand{flex-wrap:wrap}.cand .btn{width:100%}}
+.pairs{display:grid;gap:10px}
+.pair{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ptext{flex:1 1 200px}
+.ptext strong,.ptext>span{display:block}
+.reset{margin-top:40px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--paper);padding:12px 20px;border-radius:12px;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;max-width:calc(100% - 32px);font-weight:700}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.foot{display:flex;gap:18px;padding-bottom:40px;font-size:.9rem}
+.foot a{color:var(--link)}
+.pair .btn{flex:none}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="48" height="36" viewBox="0 0 48 36" aria-hidden="true"><circle cx="17" cy="18" r="14" fill="#F7C62F"/><circle cx="31" cy="18" r="14" fill="none" stroke="#fff" stroke-width="3.5"/></svg>
+      <div>
+        <h1>Buddy-Programm</h1>
+        <p>Erfahrene und neue Stipendiat:innen finden zusammen</p>
+      </div>
+      <div class="userbar" id="userbar"></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+<footer class="wrap foot" id="foot"></footer>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+/* =====================================================================
+   1. HIER DEINE SUPABASE-DATEN EINTRAGEN
+   (Supabase -> Project Settings -> API Keys, den "Publishable key" nehmen,
+    NIEMALS den "Secret key")
+   ===================================================================== */
+const SUPABASE_URL = "https://DEIN-PROJEKT.supabase.co";
+const SUPABASE_KEY = "sb_publishable_HIER_EINFUEGEN";
+
+/* Links zu Datenschutzerklärung und Impressum (später eintragen, sonst leer lassen) */
+const DATENSCHUTZ_URL = "";
+const IMPRESSUM_URL = "";
+
+/* ===== 2. Auswahllisten fürs Formular (kannst du anpassen) ===== */
+const CITIES=["Berlin","Potsdam","Hamburg","München","Köln","Leipzig","Frankfurt"];
+const FIELDS=["Informatik","Medizin","Jura","BWL","Maschinenbau","Psychologie","Lehramt","Politikwissenschaft"];
+const LANGS=["Afrikaans", "Albanisch", "Amharisch", "Arabisch", "Aramäisch", "Armenisch", "Aserbaidschanisch", "Baskisch", "Belarussisch", "Bengalisch", "Bosnisch", "Bulgarisch", "Burmesisch", "Chinesisch (Mandarin)", "Chinesisch (Kantonesisch)", "Dänisch", "Dari", "Deutsch", "Deutsche Gebärdensprache (DGS)", "Englisch", "Esperanto", "Estnisch", "Ewe", "Farsi / Persisch", "Filipino / Tagalog", "Finnisch", "Französisch", "Friesisch", "Galicisch", "Georgisch", "Griechisch", "Gujarati", "Haitianisch", "Hausa", "Hebräisch", "Hindi", "Igbo", "Indonesisch", "Irisch", "Isländisch", "Italienisch", "Japanisch", "Jiddisch", "Kasachisch", "Katalanisch", "Khmer", "Kinyarwanda", "Kirgisisch", "Koreanisch", "Kroatisch", "Kurdisch (Kurmandschi)", "Kurdisch (Sorani)", "Lao", "Latein", "Lettisch", "Lingala", "Litauisch", "Luxemburgisch", "Malagasy", "Malaiisch", "Malayalam", "Maltesisch", "Marathi", "Mazedonisch", "Mongolisch", "Nepali", "Niederländisch", "Norwegisch", "Oromo", "Paschtu", "Polnisch", "Portugiesisch", "Punjabi", "Romani", "Rumänisch", "Russisch", "Schwedisch", "Serbisch", "Shona", "Singhalesisch", "Slowakisch", "Slowenisch", "Somali", "Spanisch", "Suaheli", "Tadschikisch", "Tamil", "Tatarisch", "Telugu", "Thai", "Tigrinya", "Tschechisch", "Tschetschenisch", "Türkisch", "Turkmenisch", "Twi", "Uigurisch", "Ukrainisch", "Ungarisch", "Urdu", "Usbekisch", "Vietnamesisch", "Walisisch", "Wolof", "Xhosa", "Yoruba", "Zulu"];
+const INTERESTS=["Sport","Musik","Kochen","Ehrenamt","Politik","Kunst","Gaming","Reisen","Lesen","Natur"];
+
+/* ===== 3. Punkte fürs Matching (kannst du anpassen) ===== */
+const POINTS={city:30, uni:15, field:25, perLanguage:10, maxLanguages:2, perInterest:5, maxInterests:4, contact:10};
+const MAX=POINTS.city+POINTS.uni+POINTS.field+POINTS.perLanguage*POINTS.maxLanguages+POINTS.perInterest*POINTS.maxInterests+POINTS.contact;
+
+/* ===================== Ab hier nichts ändern nötig ===================== */
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ini=n=>String(n||"?").trim().split(/\s+/).map(w=>w[0]||"").slice(0,2).join("").toUpperCase()||"?";
+const first=n=>String(n||"").split(" ")[0];
+const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const REDIRECT=location.origin+location.pathname;
+
+const ui={screen:"login",pendingEmail:"",fromRegister:false,loginError:"",regRole:null};
+const cameFromLink=location.hash.includes("access_token");
+(function(){ // Fehler aus einem abgelaufenen Login-Link anzeigen
+  const h=new URLSearchParams(location.hash.slice(1));
+  if(h.get("error")){
+    ui.loginError=h.get("error_code")==="otp_expired"
+      ?"Der Login-Link ist abgelaufen oder wurde schon benutzt. Fordere unten einfach einen neuen an."
+      :"Die Anmeldung hat nicht geklappt. Fordere unten einen neuen Link an.";
+    history.replaceState(null,"",location.pathname+location.search);
+  }
+})();
+
+const CONFIGURED=!SUPABASE_URL.includes("DEIN-PROJEKT")&&!SUPABASE_KEY.includes("HIER_EINFUEGEN");
+const sb=(CONFIGURED&&window.supabase)?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{flowType:"implicit",detectSessionInUrl:true,persistSession:true}}):null;
+
+let authUser=null,profile=null,isAdmin=false,people=[],matches=[],loading=true,loadError="";
+
+const byId=id=>people.find(p=>p.id===id);
+const neue=()=>people.filter(p=>p.role==="neu");
+const buddies=()=>people.filter(p=>p.role==="buddy");
+const matchOf=nid=>matches.find(m=>m.neu_id===nid);
+const matchesOfBuddy=bid=>matches.filter(m=>m.buddy_id===bid);
+const freeSlots=b=>b.capacity-matchesOfBuddy(b.id).length;
+const desc=p=>`${esc(p.field)}, ${p.semester}. Semester, ${esc(p.uni||p.city)}`;
+
+/* ===== Matching ===== */
+function score(n,b){
+  let pts=0;const why=[];
+  const nl=n.languages||[],bl=b.languages||[],ni=n.interests||[],bi=b.interests||[];
+  if(n.city&&n.city===b.city){pts+=POINTS.city;why.push("gleiche Stadt ("+b.city+")")}
+  if(n.uni&&b.uni&&n.uni.trim().toLowerCase()===b.uni.trim().toLowerCase()){pts+=POINTS.uni;why.push("gleiche Hochschule")}
+  if(n.field&&n.field===b.field){pts+=POINTS.field;why.push("gleiches Fach")}
+  const L=nl.filter(x=>bl.includes(x));
+  if(L.length){pts+=Math.min(POINTS.maxLanguages,L.length)*POINTS.perLanguage;why.push("Sprache: "+L.join(", "))}
+  const I=ni.filter(x=>bi.includes(x));
+  if(I.length){pts+=Math.min(POINTS.maxInterests,I.length)*POINTS.perInterest;why.push("Interessen: "+I.join(", "))}
+  if(n.contact===b.contact||n.contact==="beides"||b.contact==="beides"){pts+=POINTS.contact;why.push("Kontaktwunsch passt")}
+  return {pts,pct:Math.round(pts/MAX*100),why};
+}
+function plan(){
+  const open=neue().filter(n=>!matchOf(n.id));
+  const cap={};buddies().forEach(b=>cap[b.id]=freeSlots(b));
+  const pairs=[];
+  open.forEach(n=>buddies().forEach(b=>{if(cap[b.id]>0)pairs.push({n,b,s:score(n,b)})}));
+  pairs.sort((a,c)=>c.s.pts-a.s.pts);
+  const res={};
+  for(const p of pairs){if(res[p.n.id]||cap[p.b.id]<=0)continue;res[p.n.id]=p;cap[p.b.id]--;}
+  return res;
+}
+
+/* ===== Daten laden ===== */
+async function loadData(){
+  const {data:{session}}=await sb.auth.getSession();
+  authUser=session?.user||null;
+  if(!authUser){profile=null;isAdmin=false;people=[];matches=[];return;}
+  const [a,p,m]=await Promise.all([
+    sb.rpc("is_admin"),
+    sb.from("profiles").select("*").order("created_at"),
+    sb.from("matches").select("*").order("created_at")
+  ]);
+  const err=a.error||p.error||m.error;if(err)throw err;
+  isAdmin=a.data===true;people=p.data||[];matches=m.data||[];
+  profile=people.find(x=>x.id===authUser.id)||null;
+}
+let shownLoginToast=false;
+async function refresh(){
+  try{loadError="";await loadData();}catch(e){loadError=e.message||String(e);}
+  loading=false;render();
+  if(cameFromLink&&authUser&&!shownLoginToast){shownLoginToast=true;toast("Du bist angemeldet.");}
+}
+
+/* ===== Ansichten: Anmeldung ===== */
+function roleChoice(){
+  return `<div class="rolechoice">
+    <button class="rolebtn" data-act="register" data-role="neu"><span class="av y sm">?</span><strong>Ich bin neu</strong><span class="muted">und wünsche mir einen Buddy</span></button>
+    <button class="rolebtn" data-act="register" data-role="buddy"><span class="av b sm">?</span><strong>Ich werde Buddy</strong><span class="muted">und begleite neue Stipendiat:innen</span></button>
+  </div>`;
+}
+function renderSetup(){
+  return `<div class="auth card"><h3>Fast fertig</h3><p>${!CONFIGURED
+    ?"Trag oben in der Datei index.html deine Supabase-Projekt-URL und deinen Publishable Key ein. Danach funktioniert die Anmeldung."
+    :"Die Verbindung zu Supabase konnte nicht geladen werden. Prüf deine Internetverbindung und lade die Seite neu."}</p></div>`;
+}
+function renderLogin(){
+  return `<div class="auth"><section class="intro"><h2>Anmelden</h2>
+  <p>Gib die E-Mail-Adresse ein, mit der du dich registriert hast. Wir schicken dir einen Link, mit dem du dich ohne Passwort anmeldest.</p></section>
+  <form class="card" id="loginform" novalidate><div class="field"><label for="l-email">E-Mail</label>
+  <input id="l-email" type="email" name="email" autocomplete="email" value="${esc(ui.pendingEmail)}">
+  <p class="err" ${ui.loginError?"":"hidden"}>${esc(ui.loginError)}</p></div>
+  <div class="actions"><button class="btn" type="submit">Login-Link senden</button></div></form>
+  <div class="card"><h3>Noch nicht dabei?</h3><p class="muted" style="margin:0">Registriere dich einmal, danach meldest du dich hier an.</p>${roleChoice()}</div></div>`;
+}
+function renderCheckMail(){
+  return `<div class="auth"><section class="intro"><h2>${ui.fromRegister?"Bestätige deine E-Mail-Adresse":"Prüfe dein Postfach"}</h2>
+  <p>Wir haben einen Link an <strong>${esc(ui.pendingEmail)}</strong> geschickt. ${ui.fromRegister
+    ?"Klick darauf, um deine Adresse zu bestätigen. Erst dann ist deine Anmeldung gespeichert."
+    :"Klick darauf, um dich anzumelden."} Der Link ist eine Stunde gültig.</p></section>
+  <div class="card"><p style="margin:0 0 12px">Keine E-Mail bekommen? Schau im Spam-Ordner nach. Nach einer Minute kannst du einen neuen Link anfordern.</p>
+  <button class="btn ghost" data-act="tologin">Andere E-Mail-Adresse verwenden</button></div></div>`;
+}
+function renderNoProfile(){
+  return `<div class="auth"><section class="intro"><h2>Fast geschafft</h2>
+  <p>Du bist mit ${esc(authUser.email)} angemeldet, aber es gibt noch kein Profil. Wähle aus, wie du mitmachen möchtest.</p></section>
+  <div class="card">${roleChoice()}</div></div>`;
+}
+function renderRegister(){
+  return `<div class="back"><button class="linkbtn" data-act="tologin">Zurück</button></div>`+formHTML(ui.regRole);
+}
+function formHTML(role){
+  const opts=a=>a.map(x=>`<option>${esc(x)}</option>`).join("");
+  const chips=(name,a)=>`<div class="chips">${a.map(o=>`<label class="chip"><input type="checkbox" name="${name}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join("")}</div>`;
+  const err=k=>`<p class="err" data-err="${k}" hidden></p>`;
+  const emailField=authUser
+    ?`<div class="field"><label for="f-email">E-Mail</label><input id="f-email" type="email" value="${esc(authUser.email)}" disabled></div>`
+    :`<div class="field"><label for="f-email">E-Mail</label><input id="f-email" name="email" type="email" autocomplete="email">${err("email")}</div>`;
+  const ds=DATENSCHUTZ_URL?` Mehr dazu in der <a href="${esc(DATENSCHUTZ_URL)}" target="_blank" rel="noopener">Datenschutzerklärung</a>.`:"";
+  return `<form class="card form" id="regform" novalidate data-role="${role}">
+  <h3>Anmeldung als ${role==="neu"?"neue:r Stipendiat:in":"Buddy"}</h3>
+  <div class="grid">
+    <div class="field"><label for="f-name">Name</label><input id="f-name" type="text" name="name" autocomplete="name">${err("name")}</div>
+    ${emailField}
+    <div class="field"><label for="f-city">Studienort</label><select id="f-city" name="city">${opts(CITIES)}</select></div>
+    <div class="field"><label for="f-uni">Hochschule</label><input id="f-uni" type="text" name="uni" placeholder="z. B. Uni Potsdam"></div>
+    <div class="field"><label for="f-field">Studienfach</label><select id="f-field" name="field">${opts(FIELDS)}</select></div>
+    <div class="field"><label for="f-sem">Semester</label><input id="f-sem" name="semester" type="number" min="1" max="20" value="${role==="neu"?1:5}"></div>
+  </div>
+  <fieldset><legend>Welche Sprachen sprichst du?</legend>
+  <p class="muted" style="margin:0 0 8px;font-size:.92rem">Tippe die Sprache ein oder wähle sie aus der Liste. Du kannst so viele hinzufügen, wie du möchtest.</p>
+  <div class="langpick"><input id="f-lang" type="text" list="langlist" placeholder="z. B. Polnisch" autocomplete="off" aria-label="Sprache suchen">
+  <button type="button" class="btn ghost small" data-act="addlang">Hinzufügen</button></div>
+  <datalist id="langlist">${LANGS.map(l=>`<option value="${esc(l)}">`).join("")}</datalist>
+  <div class="chips" id="langchips"></div>${err("languages")}</fieldset>
+  <fieldset><legend>Was machst du gern? (optional)</legend>${chips("interests",INTERESTS)}</fieldset>
+  <fieldset><legend>Wie möchtest du Kontakt halten?</legend><div class="radios">
+    <label><input type="radio" name="contact" value="persönlich"> Persönlich treffen</label>
+    <label><input type="radio" name="contact" value="online"> Online</label>
+    <label><input type="radio" name="contact" value="beides" checked> Beides ist okay</label></div></fieldset>
+  ${role==="buddy"?`<div class="field narrow"><label for="f-cap">Wie viele neue Stipendiat:innen möchtest du begleiten?</label><select id="f-cap" name="capacity"><option>1</option><option>2</option><option>3</option></select></div>`:""}
+  <label class="consent"><input type="checkbox" name="consent"> <span>Ich bin einverstanden, dass meine Angaben für die Buddy-Zuordnung gespeichert und an meinen Buddy weitergegeben werden.${ds}</span></label>${err("consent")}
+  <div class="actions"><button class="btn" type="submit">Anmeldung abschicken</button><button class="btn ghost" type="button" data-act="tologin">Abbrechen</button></div>
+  </form>`;
+}
+
+/* ===== Ansichten: angemeldete Personen ===== */
+function renderHome(p){
+  return `<section class="intro"><h2>Hallo ${esc(first(p.name))}</h2><p>${p.role==="neu"?"Hier siehst du, wie es mit deiner Buddy-Suche steht.":"Hier siehst du, wen du als Buddy begleitest."}</p></section>`+(p.role==="neu"?neuStatus(p):buddyStatus(p));
+}
+function neuStatus(n){
+  const m=matchOf(n.id),b=m&&byId(m.buddy_id);
+  if(!b)return `<div class="card status"><div class="avatars"><span class="av y">${ini(n.name)}</span><span class="av empty">?</span></div>
+    <div><h3>Wir suchen noch deinen Buddy</h3><p>Deine Anmeldung ist eingegangen. Sobald das Admin-Team ein Paar bestätigt hat, siehst du hier deinen Buddy.</p></div></div>`;
+  const s=score(n,b);
+  return `<div class="card status found"><div class="avatars big"><span class="av y">${ini(n.name)}</span><span class="av b">${ini(b.name)}</span></div>
+    <div><h3>Du hast einen Buddy: ${esc(b.name)}</h3><p>${desc(b)}. Schreib einfach eine E-Mail, um euch kennenzulernen.</p>
+    <p><strong>Was ihr gemeinsam habt:</strong></p><ul class="common">${s.why.map(w=>`<li>${esc(w)}</li>`).join("")||"<li>Das findet ihr gemeinsam heraus.</li>"}</ul>
+    <a class="btn" href="mailto:${esc(b.email)}">E-Mail an ${esc(first(b.name))} schreiben</a></div></div>`;
+}
+function buddyStatus(b){
+  const ms=matchesOfBuddy(b.id).filter(m=>byId(m.neu_id)),free=freeSlots(b);
+  const freeTxt=free>0?`Du hast noch ${free} ${free===1?"freien Platz":"freie Plätze"}.`:"Alle deine Plätze sind vergeben.";
+  if(!ms.length)return `<div class="card status"><div class="avatars"><span class="av b">${ini(b.name)}</span><span class="av empty">?</span></div>
+    <div><h3>Noch niemand zugeordnet</h3><p>Danke, dass du Buddy sein möchtest. ${freeTxt} Sobald das Admin-Team jemanden zu dir zuordnet, erscheint die Person hier.</p></div></div>`;
+  const title=ms.length===1?"Du begleitest jetzt "+esc(byId(ms[0].neu_id).name):"Du begleitest jetzt "+ms.length+" Personen";
+  return `<div class="card status found"><div class="avatars big"><span class="av b">${ini(b.name)}</span>${ms.map(m=>`<span class="av y">${ini(byId(m.neu_id).name)}</span>`).join("")}</div>
+    <div><h3>${title}</h3><p>${freeTxt}</p></div></div>
+    <div class="buddy-list">${ms.map(m=>{const n=byId(m.neu_id),s=score(n,b);
+      return `<div class="card pair"><span class="av y">${ini(n.name)}</span><div class="ptext"><strong>${esc(n.name)}</strong><span class="muted">${desc(n)}</span><p class="why">Gemeinsam: ${esc(s.why.join("; ")||"noch nichts gefunden")}</p></div><a class="btn small" href="mailto:${esc(n.email)}">E-Mail schreiben</a></div>`}).join("")}</div>`;
+}
+
+/* ===== Ansicht: Admin ===== */
+function renderAdmin(){
+  const p=plan(),open=neue().filter(n=>!matchOf(n.id));
+  const free=buddies().reduce((a,b)=>a+Math.max(0,freeSlots(b)),0);
+  const rc=Object.keys(p).length;
+  let h=`<section class="intro"><h2>Zuordnung</h2><p>${open.length} neue Stipendiat:innen warten auf einen Buddy, ${free} Buddy-Plätze sind frei und ${matches.length} Paare sind bestätigt. Die gelb markierte Empfehlung betrachtet alle Personen gleichzeitig, damit möglichst viele gute Paare entstehen.</p></section>`;
+  if(!neue().length)h+=`<div class="card muted">Noch hat sich niemand als neue:r Stipendiat:in registriert. Teile den Link zu dieser Website, damit es losgeht.</div>`;
+  else if(open.length){
+    h+=`<div class="toolbar"><button class="btn" data-act="confirmall" ${rc?"":"disabled"}>Alle ${rc} Empfehlungen bestätigen</button></div>`;
+    h+=open.map(n=>adminRow(n,p[n.id])).join("");
+  }else h+=`<div class="card muted">Alle neuen Stipendiat:innen haben einen Buddy.</div>`;
+  h+=`<h2 class="sub">Bestätigte Paare</h2>`;
+  h+=matches.length?`<div class="pairs">${matches.map(pairRow).join("")}</div>`:`<p class="muted">Noch keine Paare bestätigt.</p>`;
+  h+=`<h2 class="sub">Buddys</h2>`;
+  h+=buddies().length?`<div class="pairs">${buddies().map(b=>`<div class="card pair"><span class="av b sm">${ini(b.name)}</span><div class="ptext"><strong>${esc(b.name)}</strong><span class="muted">${desc(b)}, ${matchesOfBuddy(b.id).length} von ${b.capacity} Plätzen belegt</span></div><a class="btn ghost small" href="mailto:${esc(b.email)}">E-Mail</a></div>`).join("")}</div>`:`<p class="muted">Noch hat sich niemand als Buddy registriert.</p>`;
+  return h;
+}
+function adminRow(n,rec){
+  const others=buddies().filter(b=>freeSlots(b)>0).map(b=>({b,s:score(n,b)})).sort((a,c)=>c.s.pts-a.s.pts);
+  const list=rec?[{b:rec.b,s:rec.s,rec:true}]:[];
+  others.forEach(o=>{if(list.length<3&&(!rec||o.b.id!==rec.b.id))list.push(o)});
+  return `<article class="card nrow"><header class="nhead"><span class="av y sm">${ini(n.name)}</span>
+    <div><h3>${esc(n.name)}</h3><p class="muted">${desc(n)}, ${esc(n.city)}</p></div></header>
+    ${list.length?`<ul class="cands">${list.map(o=>cand(n,o)).join("")}</ul>`:`<p class="muted">Gerade hat kein Buddy einen freien Platz.</p>`}</article>`;
+}
+function cand(n,o){
+  return `<li class="cand ${o.rec?"rec":""}"><div class="cmain">
+    <div class="cname"><span class="av b sm">${ini(o.b.name)}</span><strong>${esc(o.b.name)}</strong>${o.rec?`<span class="tag">Empfehlung</span>`:""}</div>
+    <div class="scoreline"><div class="bar"><i style="width:${o.s.pct}%"></i></div><span class="pct">${o.s.pct} %</span></div>
+    <p class="why">${o.s.why.length?esc(o.s.why.join("; ")):"Keine Gemeinsamkeiten gefunden"}</p></div>
+    <button class="btn ${o.rec?"":"ghost"} small" data-act="confirm" data-n="${n.id}" data-b="${o.b.id}">Bestätigen</button></li>`;
+}
+function mailBoth(n,b){
+  const subject="Ihr seid jetzt Buddys im Stipendium";
+  const body=`Hallo ${first(n.name)} und ${first(b.name)},\n\nihr seid im Buddy-Programm als Paar zusammengestellt worden. ${first(b.name)} begleitet dich, ${first(n.name)}, in deiner ersten Zeit im Stipendium.\n\nMeldet euch am besten in den nächsten Tagen beieinander und vereinbart ein erstes Treffen. Euren Buddy seht ihr auch auf der Website:\n${REDIRECT}\n\nViele Grüße`;
+  return `mailto:${encodeURIComponent(n.email)},${encodeURIComponent(b.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+function pairRow(m){
+  const n=byId(m.neu_id),b=byId(m.buddy_id);if(!n||!b)return "";
+  const s=score(n,b);
+  return `<div class="card pair"><div class="avatars"><span class="av y sm">${ini(n.name)}</span><span class="av b sm">${ini(b.name)}</span></div>
+    <div class="ptext"><strong>${esc(n.name)} und ${esc(b.name)}</strong><span class="muted">Passt zu ${s.pct} %</span></div>
+    <a class="btn small" href="${mailBoth(n,b)}">E-Mail an beide</a>
+    <button class="btn ghost small" data-act="unpair" data-id="${m.id}">Auflösen</button></div>`;
+}
+
+/* ===== Steuerung ===== */
+const app=document.getElementById("app");
+const userbar=document.getElementById("userbar");
+function render(){
+  const foot=document.getElementById("foot");
+  foot.innerHTML=[DATENSCHUTZ_URL&&`<a href="${esc(DATENSCHUTZ_URL)}">Datenschutz</a>`,IMPRESSUM_URL&&`<a href="${esc(IMPRESSUM_URL)}">Impressum</a>`].filter(Boolean).join("");
+  if(!sb){userbar.innerHTML="";app.innerHTML=renderSetup();return;}
+  userbar.innerHTML=authUser?`<span class="who">${esc(profile?.name||(isAdmin?"Admin":authUser.email))}</span><button class="btn small" data-act="logout">Abmelden</button>`:"";
+  if(loading){app.innerHTML=`<p class="muted">Wird geladen …</p>`;return;}
+  if(loadError){app.innerHTML=`<div class="card"><h3>Die Daten konnten nicht geladen werden</h3><p class="muted">${esc(loadError)}</p><button class="btn" data-act="reload">Erneut versuchen</button></div>`;return;}
+  if(authUser){
+    if(isAdmin)app.innerHTML=renderAdmin();
+    else if(profile)app.innerHTML=renderHome(profile);
+    else if(ui.screen==="register")app.innerHTML=renderRegister();
+    else app.innerHTML=renderNoProfile();
+  }
+  else if(ui.screen==="checkmail")app.innerHTML=renderCheckMail();
+  else if(ui.screen==="register")app.innerHTML=renderRegister();
+  else app.innerHTML=renderLogin();
+}
+let toastTimer;
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3500)}
+function busy(f,on,txt){const b=f.querySelector('button[type="submit"]');if(!b)return;if(on){b.dataset.t=b.textContent;b.textContent=txt;b.disabled=true}else{b.textContent=b.dataset.t||b.textContent;b.disabled=false}}
+function friendly(e){
+  const m=(e&&e.message)||"";
+  if(/signups? not allowed|user not found/i.test(m))return "NOACCOUNT";
+  if(/rate limit|seconds|too many/i.test(m))return "Bitte warte eine Minute, bevor du einen neuen Link anforderst.";
+  if(/not authorized/i.test(m))return "E-Mails können gerade noch nicht verschickt werden. Das Admin-Team muss den E-Mail-Versand noch einrichten.";
+  return "Das hat nicht geklappt: "+m;
+}
+
+function addLang(){
+  const inp=document.getElementById("f-lang"),box=document.getElementById("langchips"),msg=document.querySelector('.err[data-err="languages"]');
+  if(!inp||!box)return;
+  const v=inp.value.trim();if(!v)return;
+  const hit=LANGS.find(l=>l.toLowerCase()===v.toLowerCase());
+  if(!hit){msg.textContent=`„${v}“ ist nicht in der Liste. Wähle eine Sprache aus den Vorschlägen.`;msg.hidden=false;return;}
+  msg.hidden=true;inp.value="";
+  if([...box.querySelectorAll("input")].some(i=>i.value===hit))return;
+  box.insertAdjacentHTML("beforeend",`<span class="lchip">${esc(hit)}<input type="hidden" name="languages" value="${esc(hit)}"><button type="button" data-act="rmlang" aria-label="${esc(hit)} entfernen">×</button></span>`);
+  inp.focus();
+}
+app.addEventListener("keydown",e=>{if(e.target.id==="f-lang"&&e.key==="Enter"){e.preventDefault();addLang();}});
+app.addEventListener("input",e=>{if(e.target.id==="f-lang"&&LANGS.includes(e.target.value))addLang();});
+
+async function confirmPair(nid,bid,btn){
+  const n=byId(nid),b=byId(bid);
+  if(!n||!b||matchOf(nid)||freeSlots(b)<=0)return;
+  btn.disabled=true;
+  const {error}=await sb.from("matches").insert({neu_id:nid,buddy_id:bid});
+  if(error){btn.disabled=false;toast("Fehler: "+error.message);return;}
+  await refresh();
+  toast(`Paar bestätigt. ${first(n.name)} und ${first(b.name)} sehen es jetzt auf der Website.`);
+}
+
+document.addEventListener("click",async e=>{
+  const el=e.target.closest("[data-act]");if(!el)return;
+  const a=el.dataset.act;
+  if(a==="addlang")addLang();
+  else if(a==="rmlang")el.closest(".lchip").remove();
+  else if(a==="logout"){await sb.auth.signOut();ui.screen="login";ui.pendingEmail="";ui.loginError="";toast("Du bist abgemeldet.");}
+  else if(a==="register"){ui.regRole=el.dataset.role;ui.screen="register";render();window.scrollTo(0,0);document.getElementById("f-name")?.focus();}
+  else if(a==="tologin"){ui.screen="login";ui.loginError="";render();window.scrollTo(0,0);}
+  else if(a==="reload"){loading=true;render();refresh();}
+  else if(a==="confirm")confirmPair(el.dataset.n,el.dataset.b,el);
+  else if(a==="confirmall"){
+    const rows=Object.values(plan()).map(x=>({neu_id:x.n.id,buddy_id:x.b.id}));
+    if(!rows.length)return;
+    el.disabled=true;
+    const {error}=await sb.from("matches").insert(rows);
+    if(error){el.disabled=false;toast("Fehler: "+error.message);return;}
+    await refresh();toast(`${rows.length} Paare bestätigt.`);
+  }
+  else if(a==="unpair"){
+    el.disabled=true;
+    const {error}=await sb.from("matches").delete().eq("id",el.dataset.id);
+    if(error){el.disabled=false;toast("Fehler: "+error.message);return;}
+    await refresh();toast("Paar aufgelöst.");
+  }
+});
+
+async function handleLogin(f){
+  const email=(new FormData(f).get("email")||"").trim().toLowerCase();
+  ui.pendingEmail=email;
+  if(!EMAIL_RE.test(email)){ui.loginError="Bitte gib eine gültige E-Mail-Adresse ein.";render();return;}
+  busy(f,true,"Wird gesendet …");
+  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:REDIRECT}});
+  busy(f,false);
+  if(error){
+    const msg=friendly(error);
+    ui.loginError=msg==="NOACCOUNT"?"Zu dieser E-Mail-Adresse gibt es noch keine Registrierung. Registriere dich unten als neue:r Stipendiat:in oder als Buddy.":msg;
+    render();return;
+  }
+  ui.loginError="";ui.fromRegister=false;ui.screen="checkmail";render();
+}
+async function handleRegister(f){
+  const role=f.dataset.role,fd=new FormData(f);
+  const email=authUser?authUser.email:(fd.get("email")||"").trim().toLowerCase();
+  const d={role,name:(fd.get("name")||"").trim().slice(0,100),city:fd.get("city"),uni:(fd.get("uni")||"").trim().slice(0,120),
+    field:fd.get("field"),semester:parseInt(fd.get("semester"),10)||1,languages:fd.getAll("languages"),interests:fd.getAll("interests"),
+    contact:fd.get("contact")||"beides",capacity:role==="buddy"?(parseInt(fd.get("capacity"),10)||1):0};
+  const errs={};
+  if(!d.name)errs.name="Bitte gib deinen Namen ein.";
+  if(!authUser&&!EMAIL_RE.test(email))errs.email="Bitte gib eine gültige E-Mail-Adresse ein.";
+  if(!d.languages.length)errs.languages="Wähle mindestens eine Sprache aus.";
+  if(!fd.get("consent"))errs.consent="Ohne dein Einverständnis können wir dich nicht zuordnen.";
+  const show=()=>{f.querySelectorAll(".err").forEach(p=>{const m=errs[p.dataset.err];p.textContent=m||"";p.hidden=!m});f.querySelector(".err:not([hidden])")?.scrollIntoView({block:"center"});};
+  if(Object.keys(errs).length){show();return;}
+  show();
+  busy(f,true,"Wird gesendet …");
+  if(authUser){
+    const {error}=await sb.from("profiles").insert({id:authUser.id,email,...d,consent_at:new Date().toISOString()});
+    busy(f,false);
+    if(error){errs.consent="Speichern hat nicht geklappt: "+error.message;show();return;}
+    ui.screen="login";await refresh();window.scrollTo(0,0);toast("Anmeldung gespeichert.");return;
+  }
+  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:REDIRECT,data:d}});
+  busy(f,false);
+  if(error){const m=friendly(error);errs.email=m==="NOACCOUNT"?"Das hat nicht geklappt. Bitte versuch es später noch einmal.":m;show();return;}
+  ui.pendingEmail=email;ui.fromRegister=true;ui.screen="checkmail";render();window.scrollTo(0,0);
+}
+app.addEventListener("submit",e=>{
+  e.preventDefault();
+  if(e.target.id==="loginform")handleLogin(e.target);
+  else if(e.target.id==="regform")handleRegister(e.target);
+});
+
+if(sb){
+  sb.auth.onAuthStateChange((event,session)=>{
+    const idNow=session?.user?.id||null;
+    if(event==="TOKEN_REFRESHED")return;
+    if(event==="SIGNED_IN"&&!loading&&authUser&&authUser.id===idNow)return;
+    setTimeout(refresh,0);
+  });
+}
+render();
+</script>
+</body>
+</html>
