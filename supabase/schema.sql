@@ -74,6 +74,15 @@ create table if not exists public.matches (
   created_at  timestamptz not null default now()
 );
 
+-- Einstellungen, die das Admin-Team auf der Website ändert (z. B. der Einladungscode)
+create table if not exists public.settings (
+  key   text primary key,
+  value text
+);
+
+-- Nur zum Prüfen des Einladungscodes beim Anlegen, wird danach geleert
+alter table public.profiles add column if not exists invite_code text;
+
 -- ---------- Hilfsfunktionen ----------
 
 create or replace function public.is_admin()
@@ -104,6 +113,46 @@ $$;
 revoke all on function public.email_registered(text) from public;
 grant execute on function public.email_registered(text) to anon, authenticated;
 grant execute on function public.is_admin() to authenticated;
+
+-- ---------- Einladungscode ----------
+-- Ist kein Code gesetzt, kann sich jede:r registrieren.
+
+create or replace function public.current_invite_code()
+returns text language sql stable security definer set search_path = public as $$
+  select nullif(trim(value), '') from public.settings where key = 'invite_code';
+$$;
+revoke all on function public.current_invite_code() from public, anon, authenticated;
+
+create or replace function public.invite_required()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.current_invite_code() is not null;
+$$;
+
+create or replace function public.check_invite(c text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select case when public.current_invite_code() is null then true
+              else lower(trim(coalesce(c, ''))) = lower(public.current_invite_code()) end;
+$$;
+
+revoke all on function public.invite_required() from public;
+revoke all on function public.check_invite(text) from public;
+grant execute on function public.invite_required() to anon, authenticated;
+grant execute on function public.check_invite(text) to anon, authenticated;
+
+-- Wer sein Profil selbst über die Website anlegt, braucht den richtigen Code
+create or replace function public.check_profile_invite()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is not null and not public.is_admin() and not public.check_invite(new.invite_code) then
+    raise exception 'Der Einladungscode stimmt nicht.';
+  end if;
+  new.invite_code := null;
+  return new;
+end $$;
+
+drop trigger if exists check_profile_invite on public.profiles;
+create trigger check_profile_invite before insert on public.profiles
+  for each row execute function public.check_profile_invite();
 grant execute on function public.is_partner(uuid) to authenticated;
 
 -- ---------- Paare prüfen: richtige Rollen, Buddy hat noch Platz ----------
@@ -178,12 +227,16 @@ begin
   if new.email_confirmed_at is null or r is null or r not in ('neu','buddy') then
     return new;
   end if;
+  -- falscher Einladungscode: kein Profil (die Website fragt dann erneut nach dem Code)
+  if not public.check_invite(d->>'invite_code') then
+    return new;
+  end if;
 
   sem := case when d->>'semester' ~ '^\d{1,2}$' then (d->>'semester')::int else 1 end;
   cap := case when d->>'capacity' ~ '^\d$' then (d->>'capacity')::int else 1 end;
 
   insert into public.profiles
-    (id, email, role, name, city, uni, field, semester, languages, interests, contact, capacity, consent_at)
+    (id, email, role, name, city, uni, field, semester, languages, interests, contact, capacity, consent_at, invite_code)
   values (
     new.id,
     lower(new.email),
@@ -199,7 +252,8 @@ begin
          then array(select jsonb_array_elements_text(d->'interests')) else '{}' end,
     case when d->>'contact' in ('persönlich','online','beides') then d->>'contact' else 'beides' end,
     case when r = 'buddy' then least(greatest(cap, 1), 3) else 0 end,
-    now()
+    now(),
+    d->>'invite_code'
   )
   on conflict (id) do nothing;
   return new;
@@ -221,6 +275,12 @@ create trigger on_auth_user_confirmed
 alter table public.admins   enable row level security;
 alter table public.profiles enable row level security;
 alter table public.matches  enable row level security;
+alter table public.settings enable row level security;
+
+-- settings: nur Admins lesen und ändern
+drop policy if exists "settings admin" on public.settings;
+create policy "settings admin" on public.settings for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 
 -- admins: niemand liest oder schreibt über die Website (nur über den SQL Editor)
 

@@ -18,6 +18,8 @@ Website für das Buddy-Programm im Stipendium: Erfahrene Stipendiat:innen melden
 4. **Bestätigen:** Du klickst auf „Bestätigen“ (oder auf „Alle Empfehlungen bestätigen“). Mit „E-Mail an beide“ öffnet sich eine fertige E-Mail an das Paar.
 5. **Buddy gefunden:** Die neue Person sieht „Du hast einen Buddy: …“, der Buddy sieht „Du begleitest jetzt …“, beide mit E-Mail-Knopf und Gemeinsamkeiten.
 
+**Einladungscode:** In der Admin-Ansicht ganz unten legst du einen Code fest, zum Beispiel `BUDDY2026`. Dann kann sich nur registrieren, wer ihn kennt. Die Datenbank prüft ihn, die Prüfung lässt sich also nicht umgehen. Ist das Feld leer, kann sich jede Person mit dem Link registrieren.
+
 Die Punkte fürs Matching stehen oben in `index.html` unter `POINTS` und lassen sich dort ändern. Dasselbe gilt für die Auswahllisten (`CITIES`, `FIELDS`, `INTERESTS`).
 
 ---
