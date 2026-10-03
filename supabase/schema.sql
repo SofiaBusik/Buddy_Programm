@@ -122,6 +122,36 @@ drop trigger if exists check_match on public.matches;
 create trigger check_match before insert on public.matches
   for each row execute function public.check_match();
 
+-- ---------- Profil ändern: Rolle und E-Mail bleiben, Plätze nicht unter Belegung ----------
+
+create or replace function public.protect_profile()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  used int;
+begin
+  -- über die Website (nicht im SQL Editor) dürfen nur Admins diese Felder ändern
+  if auth.uid() is not null and not public.is_admin() then
+    new.id         := old.id;
+    new.role       := old.role;
+    new.email      := old.email;
+    new.consent_at := old.consent_at;
+    new.created_at := old.created_at;
+  end if;
+  if new.role = 'neu' then
+    new.capacity := 0;
+  else
+    select count(*) into used from public.matches where buddy_id = new.id;
+    if new.capacity < greatest(used, 1) then
+      raise exception 'Du begleitest schon % Person(en). Weniger Plätze gehen erst, wenn ein Paar aufgelöst wurde.', used;
+    end if;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists protect_profile on public.profiles;
+create trigger protect_profile before update on public.profiles
+  for each row execute function public.protect_profile();
+
 -- ---------- Profil automatisch anlegen, sobald die E-Mail bestätigt ist ----------
 -- Die Website schickt die Formulardaten beim Registrieren mit (raw_user_meta_data).
 

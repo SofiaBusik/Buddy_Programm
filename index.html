@@ -171,6 +171,16 @@ legend{margin-bottom:8px;padding:0}
 .foot{display:flex;gap:18px;padding-bottom:40px;font-size:.9rem}
 .foot a{color:var(--link)}
 .pair .btn{flex:none}
+.nhead>div{flex:1;min-width:0}
+
+/* Vorschau & Profil */
+.preview{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--blue-soft);border:2px solid var(--primary);border-radius:14px;padding:12px 16px;margin-bottom:24px}
+.preview p{margin:0;flex:1 1 240px}
+.facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:0}
+.facts dt{font-weight:700}
+.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+@media (max-width:520px){.facts{grid-template-columns:1fr;gap:0}.facts dd{margin-bottom:8px}}
+.btn.danger{color:var(--danger)}
 </style>
 </head>
 <body>
@@ -222,7 +232,8 @@ const first=n=>String(n||"").split(" ")[0];
 const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REDIRECT=location.origin+location.pathname;
 
-const ui={screen:"login",pendingEmail:"",fromRegister:false,loginError:"",regRole:null};
+const ui={screen:"login",pendingEmail:"",fromRegister:false,loginError:"",regRole:null,preview:null,editing:false};
+const CONTACT={"persönlich":"Persönlich treffen","online":"Online","beides":"Persönlich oder online"};
 const cameFromLink=location.hash.includes("access_token");
 (function(){ // Fehler aus einem abgelaufenen Login-Link anzeigen
   const h=new URLSearchParams(location.hash.slice(1));
@@ -330,44 +341,68 @@ function renderNoProfile(){
 function renderRegister(){
   return `<div class="back"><button class="linkbtn" data-act="tologin">Zurück</button></div>`+formHTML(ui.regRole);
 }
-function formHTML(role){
-  const opts=a=>a.map(x=>`<option>${esc(x)}</option>`).join("");
-  const chips=(name,a)=>`<div class="chips">${a.map(o=>`<label class="chip"><input type="checkbox" name="${name}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join("")}</div>`;
+function lchipHTML(l){
+  return `<span class="lchip">${esc(l)}<input type="hidden" name="languages" value="${esc(l)}"><button type="button" data-act="rmlang" aria-label="${esc(l)} entfernen">×</button></span>`;
+}
+/* p = vorhandenes Profil: dann ist es das Formular zum Ändern der Angaben */
+function formHTML(role,p){
+  const edit=!!p,sel=(a,b)=>a===b?" selected":"";
+  const opts=(a,cur)=>a.map(x=>`<option${sel(x,cur)}>${esc(x)}</option>`).join("");
+  const chips=(name,a,cur)=>`<div class="chips">${a.map(o=>`<label class="chip"><input type="checkbox" name="${name}" value="${esc(o)}"${(cur||[]).includes(o)?" checked":""}><span>${esc(o)}</span></label>`).join("")}</div>`;
+  const contact=p?.contact||"beides",radio=(v,t)=>`<label><input type="radio" name="contact" value="${v}"${v===contact?" checked":""}> ${t}</label>`;
+  const used=edit&&role==="buddy"?matchesOfBuddy(p.id).length:0;
+  const capOpts=[1,2,3].map(c=>`<option${c<used?" disabled":""}${sel(c,p?.capacity??1)}>${c}</option>`).join("");
   const err=k=>`<p class="err" data-err="${k}" hidden></p>`;
   const emailField=authUser
     ?`<div class="field"><label for="f-email">E-Mail</label><input id="f-email" type="email" value="${esc(authUser.email)}" disabled></div>`
     :`<div class="field"><label for="f-email">E-Mail</label><input id="f-email" name="email" type="email" autocomplete="email">${err("email")}</div>`;
   const ds=DATENSCHUTZ_URL?` Mehr dazu in der <a href="${esc(DATENSCHUTZ_URL)}" target="_blank" rel="noopener">Datenschutzerklärung</a>.`:"";
-  return `<form class="card form" id="regform" novalidate data-role="${role}">
-  <h3>Anmeldung als ${role==="neu"?"neue:r Stipendiat:in":"Buddy"}</h3>
+  return `<form class="card form" id="regform" novalidate data-role="${role}"${edit?' data-mode="edit"':""}>
+  <h3>${edit?"Deine Angaben ändern":"Anmeldung als "+(role==="neu"?"neue:r Stipendiat:in":"Buddy")}</h3>
   <div class="grid">
-    <div class="field"><label for="f-name">Name</label><input id="f-name" type="text" name="name" autocomplete="name">${err("name")}</div>
+    <div class="field"><label for="f-name">Name</label><input id="f-name" type="text" name="name" autocomplete="name" value="${esc(p?.name)}">${err("name")}</div>
     ${emailField}
-    <div class="field"><label for="f-city">Studienort</label><select id="f-city" name="city">${opts(CITIES)}</select></div>
-    <div class="field"><label for="f-uni">Hochschule</label><input id="f-uni" type="text" name="uni" placeholder="z. B. Uni Potsdam"></div>
-    <div class="field"><label for="f-field">Studienfach</label><select id="f-field" name="field">${opts(FIELDS)}</select></div>
-    <div class="field"><label for="f-sem">Semester</label><input id="f-sem" name="semester" type="number" min="1" max="20" value="${role==="neu"?1:5}"></div>
+    <div class="field"><label for="f-city">Studienort</label><select id="f-city" name="city">${opts(CITIES,p?.city)}</select></div>
+    <div class="field"><label for="f-uni">Hochschule</label><input id="f-uni" type="text" name="uni" placeholder="z. B. Uni Potsdam" value="${esc(p?.uni)}"></div>
+    <div class="field"><label for="f-field">Studienfach</label><select id="f-field" name="field">${opts(FIELDS,p?.field)}</select></div>
+    <div class="field"><label for="f-sem">Semester</label><input id="f-sem" name="semester" type="number" min="1" max="20" value="${p?.semester??(role==="neu"?1:5)}"></div>
   </div>
   <fieldset><legend>Welche Sprachen sprichst du?</legend>
   <p class="muted" style="margin:0 0 8px;font-size:.92rem">Tippe die Sprache ein oder wähle sie aus der Liste. Du kannst so viele hinzufügen, wie du möchtest.</p>
   <div class="langpick"><input id="f-lang" type="text" list="langlist" placeholder="z. B. Polnisch" autocomplete="off" aria-label="Sprache suchen">
   <button type="button" class="btn ghost small" data-act="addlang">Hinzufügen</button></div>
   <datalist id="langlist">${LANGS.map(l=>`<option value="${esc(l)}">`).join("")}</datalist>
-  <div class="chips" id="langchips"></div>${err("languages")}</fieldset>
-  <fieldset><legend>Was machst du gern? (optional)</legend>${chips("interests",INTERESTS)}</fieldset>
+  <div class="chips" id="langchips">${(p?.languages||[]).map(lchipHTML).join("")}</div>${err("languages")}</fieldset>
+  <fieldset><legend>Was machst du gern? (optional)</legend>${chips("interests",INTERESTS,p?.interests)}</fieldset>
   <fieldset><legend>Wie möchtest du Kontakt halten?</legend><div class="radios">
-    <label><input type="radio" name="contact" value="persönlich"> Persönlich treffen</label>
-    <label><input type="radio" name="contact" value="online"> Online</label>
-    <label><input type="radio" name="contact" value="beides" checked> Beides ist okay</label></div></fieldset>
-  ${role==="buddy"?`<div class="field narrow"><label for="f-cap">Wie viele neue Stipendiat:innen möchtest du begleiten?</label><select id="f-cap" name="capacity"><option>1</option><option>2</option><option>3</option></select></div>`:""}
-  <label class="consent"><input type="checkbox" name="consent"> <span>Ich bin einverstanden, dass meine Angaben für die Buddy-Zuordnung gespeichert und an meinen Buddy weitergegeben werden.${ds}</span></label>${err("consent")}
-  <div class="actions"><button class="btn" type="submit">Anmeldung abschicken</button><button class="btn ghost" type="button" data-act="tologin">Abbrechen</button></div>
+    ${radio("persönlich","Persönlich treffen")}${radio("online","Online")}${radio("beides","Beides ist okay")}</div></fieldset>
+  ${role==="buddy"?`<div class="field narrow"><label for="f-cap">Wie viele neue Stipendiat:innen möchtest du begleiten?</label><select id="f-cap" name="capacity">${capOpts}</select>${used?`<p class="muted" style="margin:4px 0 0;font-size:.9rem">Du begleitest schon ${used} ${used===1?"Person":"Personen"}, weniger Plätze gehen deshalb nicht.</p>`:""}${err("capacity")}</div>`:""}
+  ${edit?"":`<label class="consent"><input type="checkbox" name="consent"> <span>Ich bin einverstanden, dass meine Angaben für die Buddy-Zuordnung gespeichert und an meinen Buddy weitergegeben werden.${ds}</span></label>`}${err("consent")}
+  <div class="actions"><button class="btn" type="submit">${edit?"Speichern":"Anmeldung abschicken"}</button><button class="btn ghost" type="button" data-act="${edit?"canceledit":"tologin"}">Abbrechen</button></div>
   </form>`;
 }
 
 /* ===== Ansichten: angemeldete Personen ===== */
-function renderHome(p){
-  return `<section class="intro"><h2>Hallo ${esc(first(p.name))}</h2><p>${p.role==="neu"?"Hier siehst du, wie es mit deiner Buddy-Suche steht.":"Hier siehst du, wen du als Buddy begleitest."}</p></section>`+(p.role==="neu"?neuStatus(p):buddyStatus(p));
+function renderHome(p,preview){
+  return `<section class="intro"><h2>Hallo ${esc(first(p.name))}</h2><p>${p.role==="neu"?"Hier siehst du, wie es mit deiner Buddy-Suche steht.":"Hier siehst du, wen du als Buddy begleitest."}</p></section>`+(p.role==="neu"?neuStatus(p):buddyStatus(p))+profileCard(p,preview);
+}
+function profileCard(p,preview){
+  const row=(k,v)=>v?`<dt>${k}</dt><dd>${esc(v)}</dd>`:"";
+  const off=preview?" disabled":"";
+  return `<h2 class="sub">Deine Angaben</h2><div class="card"><dl class="facts">
+    ${row("Name",p.name)}${row("E-Mail",p.email)}${row("Studium",`${p.field}, ${p.semester}. Semester`)}
+    ${row("Hochschule",[p.uni,p.city].filter(Boolean).join(", "))}${row("Sprachen",(p.languages||[]).join(", "))}
+    ${row("Interessen",(p.interests||[]).join(", "))}${row("Kontakt",CONTACT[p.contact]||p.contact)}
+    ${p.role==="buddy"?row("Plätze",`${p.capacity} (${matchesOfBuddy(p.id).length} belegt)`):""}</dl>
+    <div class="actions"><button class="btn small" data-act="editprofile"${off}>Angaben ändern</button>
+    <button class="btn ghost small danger" data-act="leave"${off}>Aus dem Programm austreten</button></div></div>`;
+}
+function renderEdit(p){
+  return `<div class="back"><button class="linkbtn" data-act="canceledit">Zurück</button></div>`+formHTML(p.role,p);
+}
+function renderPreview(p){
+  return `<div class="preview" role="note"><p><strong>Vorschau:</strong> So sieht ${esc(p.name)} (${p.role==="neu"?"neu":"Buddy"}) die Seite nach dem Anmelden.</p>
+    <button class="btn small" data-act="endpreview">Zurück zur Zuordnung</button></div>`+renderHome(p,true);
 }
 function neuStatus(n){
   const m=matchOf(n.id),b=m&&byId(m.buddy_id);
@@ -405,7 +440,7 @@ function renderAdmin(){
   h+=`<h2 class="sub">Bestätigte Paare</h2>`;
   h+=matches.length?`<div class="pairs">${matches.map(pairRow).join("")}</div>`:`<p class="muted">Noch keine Paare bestätigt.</p>`;
   h+=`<h2 class="sub">Buddys</h2>`;
-  h+=buddies().length?`<div class="pairs">${buddies().map(b=>`<div class="card pair"><span class="av b sm">${ini(b.name)}</span><div class="ptext"><strong>${esc(b.name)}</strong><span class="muted">${desc(b)}, ${matchesOfBuddy(b.id).length} von ${b.capacity} Plätzen belegt</span></div><a class="btn ghost small" href="mailto:${esc(b.email)}">E-Mail</a></div>`).join("")}</div>`:`<p class="muted">Noch hat sich niemand als Buddy registriert.</p>`;
+  h+=buddies().length?`<div class="pairs">${buddies().map(b=>`<div class="card pair"><span class="av b sm">${ini(b.name)}</span><div class="ptext"><strong>${esc(b.name)}</strong><span class="muted">${desc(b)}, ${matchesOfBuddy(b.id).length} von ${b.capacity} Plätzen belegt</span></div>${previewBtn(b)}<a class="btn ghost small" href="mailto:${esc(b.email)}">E-Mail</a></div>`).join("")}</div>`:`<p class="muted">Noch hat sich niemand als Buddy registriert.</p>`;
   return h;
 }
 function adminRow(n,rec){
@@ -413,9 +448,11 @@ function adminRow(n,rec){
   const list=rec?[{b:rec.b,s:rec.s,rec:true}]:[];
   others.forEach(o=>{if(list.length<3&&(!rec||o.b.id!==rec.b.id))list.push(o)});
   return `<article class="card nrow"><header class="nhead"><span class="av y sm">${ini(n.name)}</span>
-    <div><h3>${esc(n.name)}</h3><p class="muted">${desc(n)}, ${esc(n.city)}</p></div></header>
+    <div><h3>${esc(n.name)}</h3><p class="muted">${desc(n)}, ${esc(n.city)}</p></div>${previewBtn(n)}</header>
     ${list.length?`<ul class="cands">${list.map(o=>cand(n,o)).join("")}</ul>`:`<p class="muted">Gerade hat kein Buddy einen freien Platz.</p>`}</article>`;
 }
+const previewBtn=p=>`<button class="btn ghost small" data-act="preview" data-id="${p.id}" aria-label="Ansicht von ${esc(p.name)} ansehen">Ansicht</button>`;
+const previewLink=p=>`<button class="linkbtn" data-act="preview" data-id="${p.id}" title="Ansicht von ${esc(p.name)} ansehen">${esc(p.name)}</button>`;
 function cand(n,o){
   return `<li class="cand ${o.rec?"rec":""}"><div class="cmain">
     <div class="cname"><span class="av b sm">${ini(o.b.name)}</span><strong>${esc(o.b.name)}</strong>${o.rec?`<span class="tag">Empfehlung</span>`:""}</div>
@@ -432,7 +469,7 @@ function pairRow(m){
   const n=byId(m.neu_id),b=byId(m.buddy_id);if(!n||!b)return "";
   const s=score(n,b);
   return `<div class="card pair"><div class="avatars"><span class="av y sm">${ini(n.name)}</span><span class="av b sm">${ini(b.name)}</span></div>
-    <div class="ptext"><strong>${esc(n.name)} und ${esc(b.name)}</strong><span class="muted">Passt zu ${s.pct} %</span></div>
+    <div class="ptext"><strong>${previewLink(n)} und ${previewLink(b)}</strong><span class="muted">Passt zu ${s.pct} %</span></div>
     <a class="btn small" href="${mailBoth(n,b)}">E-Mail an beide</a>
     <button class="btn ghost small" data-act="unpair" data-id="${m.id}">Auflösen</button></div>`;
 }
@@ -448,8 +485,8 @@ function render(){
   if(loading){app.innerHTML=`<p class="muted">Wird geladen …</p>`;return;}
   if(loadError){app.innerHTML=`<div class="card"><h3>Die Daten konnten nicht geladen werden</h3><p class="muted">${esc(loadError)}</p><button class="btn" data-act="reload">Erneut versuchen</button></div>`;return;}
   if(authUser){
-    if(isAdmin)app.innerHTML=renderAdmin();
-    else if(profile)app.innerHTML=renderHome(profile);
+    if(isAdmin)app.innerHTML=ui.preview&&byId(ui.preview)?renderPreview(byId(ui.preview)):renderAdmin();
+    else if(profile)app.innerHTML=ui.editing?renderEdit(profile):renderHome(profile);
     else if(ui.screen==="register")app.innerHTML=renderRegister();
     else app.innerHTML=renderNoProfile();
   }
@@ -476,7 +513,7 @@ function addLang(){
   if(!hit){msg.textContent=`„${v}“ ist nicht in der Liste. Wähle eine Sprache aus den Vorschlägen.`;msg.hidden=false;return;}
   msg.hidden=true;inp.value="";
   if([...box.querySelectorAll("input")].some(i=>i.value===hit))return;
-  box.insertAdjacentHTML("beforeend",`<span class="lchip">${esc(hit)}<input type="hidden" name="languages" value="${esc(hit)}"><button type="button" data-act="rmlang" aria-label="${esc(hit)} entfernen">×</button></span>`);
+  box.insertAdjacentHTML("beforeend",lchipHTML(hit));
   inp.focus();
 }
 app.addEventListener("keydown",e=>{if(e.target.id==="f-lang"&&e.key==="Enter"){e.preventDefault();addLang();}});
@@ -497,10 +534,22 @@ document.addEventListener("click",async e=>{
   const a=el.dataset.act;
   if(a==="addlang")addLang();
   else if(a==="rmlang")el.closest(".lchip").remove();
-  else if(a==="logout"){await sb.auth.signOut();ui.screen="login";ui.pendingEmail="";ui.loginError="";toast("Du bist abgemeldet.");}
+  else if(a==="logout"){await sb.auth.signOut();ui.screen="login";ui.preview=null;ui.editing=false;ui.pendingEmail="";ui.loginError="";toast("Du bist abgemeldet.");}
   else if(a==="register"){ui.regRole=el.dataset.role;ui.screen="register";render();window.scrollTo(0,0);document.getElementById("f-name")?.focus();}
   else if(a==="tologin"){ui.screen="login";ui.loginError="";render();window.scrollTo(0,0);}
   else if(a==="reload"){loading=true;render();refresh();}
+  else if(a==="preview"){ui.preview=el.dataset.id;render();window.scrollTo(0,0);}
+  else if(a==="endpreview"){ui.preview=null;render();window.scrollTo(0,0);}
+  else if(a==="editprofile"){ui.editing=true;render();window.scrollTo(0,0);document.getElementById("f-name")?.focus();}
+  else if(a==="canceledit"){ui.editing=false;render();window.scrollTo(0,0);}
+  else if(a==="leave"){
+    const m=profile.role==="neu"?(matchOf(profile.id)?" Die Verbindung zu deinem Buddy wird dabei aufgelöst.":""):(matchesOfBuddy(profile.id).length?" Die Verbindungen zu den Personen, die du begleitest, werden dabei aufgelöst.":"");
+    if(!confirm("Möchtest du wirklich aus dem Buddy-Programm austreten? Deine Angaben werden gelöscht."+m))return;
+    el.disabled=true;
+    const {error}=await sb.from("profiles").delete().eq("id",authUser.id);
+    if(error){el.disabled=false;toast("Fehler: "+error.message);return;}
+    await sb.auth.signOut();ui.screen="login";ui.editing=false;toast("Du bist ausgetreten. Deine Angaben wurden gelöscht.");
+  }
   else if(a==="confirm")confirmPair(el.dataset.n,el.dataset.b,el);
   else if(a==="confirmall"){
     const rows=Object.values(plan()).map(x=>({neu_id:x.n.id,buddy_id:x.b.id}));
@@ -538,15 +587,23 @@ async function handleRegister(f){
   const d={role,name:(fd.get("name")||"").trim().slice(0,100),city:fd.get("city"),uni:(fd.get("uni")||"").trim().slice(0,120),
     field:fd.get("field"),semester:parseInt(fd.get("semester"),10)||1,languages:fd.getAll("languages"),interests:fd.getAll("interests"),
     contact:fd.get("contact")||"beides",capacity:role==="buddy"?(parseInt(fd.get("capacity"),10)||1):0};
-  const errs={};
+  const errs={},edit=f.dataset.mode==="edit";
   if(!d.name)errs.name="Bitte gib deinen Namen ein.";
   if(!authUser&&!EMAIL_RE.test(email))errs.email="Bitte gib eine gültige E-Mail-Adresse ein.";
   if(!d.languages.length)errs.languages="Wähle mindestens eine Sprache aus.";
-  if(!fd.get("consent"))errs.consent="Ohne dein Einverständnis können wir dich nicht zuordnen.";
+  if(edit&&role==="buddy"&&d.capacity<matchesOfBuddy(authUser.id).length)errs.capacity="Du begleitest schon mehr Personen, als du hier angibst.";
+  if(!edit&&!fd.get("consent"))errs.consent="Ohne dein Einverständnis können wir dich nicht zuordnen.";
   const show=()=>{f.querySelectorAll(".err").forEach(p=>{const m=errs[p.dataset.err];p.textContent=m||"";p.hidden=!m});f.querySelector(".err:not([hidden])")?.scrollIntoView({block:"center"});};
   if(Object.keys(errs).length){show();return;}
   show();
-  busy(f,true,"Wird gesendet …");
+  busy(f,true,edit?"Wird gespeichert …":"Wird gesendet …");
+  if(edit){
+    const {role:_,...changes}=d;
+    const {error}=await sb.from("profiles").update(changes).eq("id",authUser.id);
+    busy(f,false);
+    if(error){errs.consent="Speichern hat nicht geklappt: "+error.message;show();return;}
+    ui.editing=false;await refresh();window.scrollTo(0,0);toast("Deine Angaben sind gespeichert.");return;
+  }
   if(authUser){
     const {error}=await sb.from("profiles").insert({id:authUser.id,email,...d,consent_at:new Date().toISOString()});
     busy(f,false);
