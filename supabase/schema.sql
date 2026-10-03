@@ -4,6 +4,43 @@
 -- Das Skript kann man mehrmals ausführen, ohne dass Daten verloren gehen.
 -- =====================================================================
 
+-- ---------- Alte Test-Versionen aufräumen ----------
+-- Tabellen, denen Spalten dieser Version fehlen, stammen aus einem früheren
+-- Test und werden gelöscht. Aktuelle Tabellen samt Daten bleiben erhalten.
+do $$
+declare
+  need jsonb := '{
+    "admins":   ["user_id"],
+    "profiles": ["id","email","role","name","city","uni","field","semester","languages","interests","contact","capacity","consent_at","created_at"],
+    "matches":  ["id","neu_id","buddy_id","created_at"]
+  }';
+  tbl text;
+  t record;
+begin
+  -- matches zuerst prüfen, weil es auf profiles verweist
+  foreach tbl in array array['matches','profiles','admins'] loop
+    if to_regclass('public.' || tbl) is not null and exists (
+      select 1 from jsonb_array_elements_text(need->tbl) c(col)
+      where not exists (select 1 from information_schema.columns
+                        where table_schema = 'public' and table_name = tbl and column_name = c.col)
+    ) then
+      raise notice 'Alte Tabelle % wird ersetzt.', tbl;
+      execute format('drop table public.%I cascade', tbl);
+    end if;
+  end loop;
+
+  -- alte selbst angelegte Trigger auf auth.users entfernen (unserer wird unten neu angelegt)
+  for t in select tgname from pg_trigger
+           where tgrelid = 'auth.users'::regclass and not tgisinternal loop
+    execute format('drop trigger if exists %I on auth.users', t.tgname);
+  end loop;
+end $$;
+
+-- Funktionen neu anlegen (die Regeln, die sie benutzen, entstehen weiter unten neu)
+drop function if exists public.is_admin cascade;
+drop function if exists public.is_partner cascade;
+drop function if exists public.handle_new_user cascade;
+
 -- ---------- Tabellen ----------
 
 -- Wer hier eingetragen ist, sieht die Admin-Ansicht.
