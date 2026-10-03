@@ -6,7 +6,7 @@ Website für das Buddy-Programm im Stipendium: Erfahrene Stipendiat:innen melden
 |---|---|
 | `index.html` | Die ganze Website (Anmeldung, beide Ansichten, Admin-Ansicht, Matching) |
 | `supabase/schema.sql` | Die Datenbank: Tabellen und Zugriffsregeln, einmal in Supabase ausführen |
-| `datenschutz.html`, `impressum.html` | Vorlagen für Datenschutzerklärung und Impressum (gelb markierte Stellen ausfüllen) |
+| `datenschutz.html` | Datenschutzerklärung (verantwortlich: Sofiia Bulyntseva) |
 | `vendor/` | Schriften und Supabase-Bibliothek lokal, damit beim Aufruf keine Daten an Google oder andere Dritte gehen |
 | `prototyp/index.html` | Der erste Prototyp ohne Datenbank (nur zum Anschauen) |
 
@@ -95,7 +95,14 @@ Ohne eigenen Mail-Dienst verschickt Supabase nur sehr wenige E-Mails pro Stunde 
 ### Schritt 7: Farben und Rechtliches
 
 - **Farben:** Oben in `index.html` stehen `--blue`, `--blue-deep` und `--yellow`. Dort die genauen Farbcodes des Stipendiums eintragen (zum Beispiel `#1C3F94`). Außerdem kommt Gelb im Logo vor (`fill="#F7C62F"` im `<svg>`).
-- **Datenschutz und Impressum:** Die Vorlagen `datenschutz.html` und `impressum.html` öffnen und alle gelb markierten Stellen ausfüllen (auf github.com: Datei öffnen, Stift-Symbol, ändern, „Commit changes“). Danach die Markierung `<mark class="todo">…</mark>` entfernen und nur den Text stehen lassen. Die Vorlagen sind keine Rechtsberatung. Bitte vor dem Start mit eurer Stiftung abstimmen.
+- **Datenschutz:** Die Datenschutzerklärung steht in `datenschutz.html`. Ändert sich etwas (anderer Mail-Dienst, neue Verantwortliche, Kontakt-E-Mail), dort anpassen und das Datum bei „Stand“ aktualisieren. Ein Impressum gibt es nicht, weil die Seite privat und nicht kommerziell ist. Wird das Programm später offiziell von der Stiftung betrieben, kommt deren Impressum dazu.
+- **Jährlich zum 30.09. alle Profile löschen** (so steht es in der Datenschutzerklärung). Im Supabase **SQL Editor** ausführen:
+  ```sql
+  delete from public.matches;
+  delete from public.profiles;
+  delete from auth.users where id not in (select user_id from public.admins);
+  ```
+  Die Admin-Konten bleiben erhalten. Danach am besten einen neuen Einladungscode für den nächsten Jahrgang festlegen.
 
 ---
 
