@@ -4,9 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Buddy-Programm</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
 <style>
 /* ===== Farben: hier später die genauen Stipendiums-Farbcodes eintragen ===== */
 :root{
@@ -201,7 +199,7 @@ legend{margin-bottom:8px;padding:0}
 <footer class="wrap foot" id="foot"></footer>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="vendor/supabase.js"></script>
 <script>
 /* =====================================================================
    1. HIER DEINE SUPABASE-DATEN EINTRAGEN
@@ -212,8 +210,8 @@ const SUPABASE_URL = "https://jelbgavgsrqtjqvbpjtn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_3PB1EKLilMye9B-udZ9Hzg_6Gw-kw97";
 
 /* Links zu Datenschutzerklärung und Impressum (später eintragen, sonst leer lassen) */
-const DATENSCHUTZ_URL = "";
-const IMPRESSUM_URL = "";
+const DATENSCHUTZ_URL = "datenschutz.html";
+const IMPRESSUM_URL = "impressum.html";
 
 /* ===== 2. Auswahllisten fürs Formular (kannst du anpassen) ===== */
 const CITIES=["Berlin","Potsdam","Hamburg","München","Köln","Leipzig","Frankfurt"];

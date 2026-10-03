@@ -1,0 +1,26 @@
+/* Gemeinsames Aussehen für Datenschutz und Impressum (Farben wie in index.html) */
+:root{
+  --blue:#1C3F94; --blue-deep:#132B66; --yellow:#F7C62F;
+  --paper:#F6F8FC; --surface:#FFFFFF; --ink:#17213A; --muted:#5A6580; --line:#D8DEEB; --link:#1C3F94; --todo:#FFF4D1;
+  --font-head:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--paper:#0E1426;--surface:#172039;--ink:#EDF1FA;--muted:#A5B0C8;--line:#2A3556;--link:#9DB7FF;--todo:#3A3113}
+}
+:root[data-theme="dark"]{--paper:#0E1426;--surface:#172039;--ink:#EDF1FA;--muted:#A5B0C8;--line:#2A3556;--link:#9DB7FF;--todo:#3A3113}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.top{background:var(--blue-deep);color:#fff;border-bottom:5px solid var(--yellow)}
+.wrap{max-width:780px;margin:0 auto;padding:0 20px}
+.top .wrap{display:flex;align-items:center;gap:14px;padding-top:22px;padding-bottom:22px}
+.top a{color:#fff;text-decoration:none;font-family:var(--font-head);font-weight:800;font-size:1.4rem}
+main{padding:32px 0 64px}
+h1{font-family:var(--font-head);font-size:clamp(1.6rem,4vw,2.1rem);line-height:1.15;margin:0 0 8px}
+h2{font-family:var(--font-head);font-size:1.25rem;margin:34px 0 8px}
+p,li{max-width:68ch}
+a{color:var(--link)}
+.muted{color:var(--muted)}
+mark.todo{background:var(--todo);color:inherit;padding:1px 4px;border-radius:4px;outline:1px dashed var(--yellow)}
+.back{display:inline-block;margin-top:32px}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
