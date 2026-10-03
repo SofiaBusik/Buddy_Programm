@@ -519,6 +519,21 @@ function addLang(){
 app.addEventListener("keydown",e=>{if(e.target.id==="f-lang"&&e.key==="Enter"){e.preventDefault();addLang();}});
 app.addEventListener("input",e=>{if(e.target.id==="f-lang"&&LANGS.includes(e.target.value))addLang();});
 
+/* Ist die E-Mail schon registriert? null = unbekannt (dann nicht blockieren) */
+const TAKEN_MSG="Mit dieser E-Mail-Adresse ist schon jemand registriert. Melde dich stattdessen über „Anmelden“ an.";
+async function emailTaken(email){
+  const {data,error}=await sb.rpc("email_registered",{e:email});
+  return error?null:data===true;
+}
+app.addEventListener("change",async e=>{
+  if(e.target.id!=="f-email"||authUser)return;
+  const email=e.target.value.trim().toLowerCase(),msg=document.querySelector('.err[data-err="email"]');
+  if(!msg||!EMAIL_RE.test(email))return;
+  const taken=await emailTaken(email);
+  if(e.target.value.trim().toLowerCase()!==email)return; // inzwischen weitergetippt
+  msg.textContent=taken?TAKEN_MSG:"";msg.hidden=!taken;
+});
+
 async function confirmPair(nid,bid,btn){
   const n=byId(nid),b=byId(bid);
   if(!n||!b||matchOf(nid)||freeSlots(b)<=0)return;
@@ -610,6 +625,7 @@ async function handleRegister(f){
     if(error){errs.consent="Speichern hat nicht geklappt: "+error.message;show();return;}
     ui.screen="login";await refresh();window.scrollTo(0,0);toast("Anmeldung gespeichert.");return;
   }
+  if(await emailTaken(email)){busy(f,false);errs.email=TAKEN_MSG;show();return;}
   const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:REDIRECT,data:d}});
   busy(f,false);
   if(error){const m=friendly(error);errs.email=m==="NOACCOUNT"?"Das hat nicht geklappt. Bitte versuch es später noch einmal.":m;show();return;}
