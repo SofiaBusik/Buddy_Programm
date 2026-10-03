@@ -6,6 +6,8 @@ Website für das Buddy-Programm im Stipendium: Erfahrene Stipendiat:innen melden
 |---|---|
 | `index.html` | Die ganze Website (Anmeldung, beide Ansichten, Admin-Ansicht, Matching) |
 | `supabase/schema.sql` | Die Datenbank: Tabellen und Zugriffsregeln, einmal in Supabase ausführen |
+| `datenschutz.html`, `impressum.html` | Vorlagen für Datenschutzerklärung und Impressum (gelb markierte Stellen ausfüllen) |
+| `vendor/` | Schriften und Supabase-Bibliothek lokal, damit beim Aufruf keine Daten an Google oder andere Dritte gehen |
 | `prototyp/index.html` | Der erste Prototyp ohne Datenbank (nur zum Anschauen) |
 
 ## So funktioniert es
@@ -15,6 +17,8 @@ Website für das Buddy-Programm im Stipendium: Erfahrene Stipendiat:innen melden
 3. **Matching:** Die Admin-Ansicht berechnet für jede neue Person die passendsten Buddys mit einer Prozentzahl und dem Grund („gleiche Stadt“, „Sprache: Polnisch“ …). Die gelbe **Empfehlung** betrachtet alle gleichzeitig, damit möglichst viele gute Paare entstehen und kein Buddy mehr Personen bekommt, als er oder sie angegeben hat.
 4. **Bestätigen:** Du klickst auf „Bestätigen“ (oder auf „Alle Empfehlungen bestätigen“). Mit „E-Mail an beide“ öffnet sich eine fertige E-Mail an das Paar.
 5. **Buddy gefunden:** Die neue Person sieht „Du hast einen Buddy: …“, der Buddy sieht „Du begleitest jetzt …“, beide mit E-Mail-Knopf und Gemeinsamkeiten.
+
+**Einladungscode:** In der Admin-Ansicht ganz unten legst du einen Code fest, zum Beispiel `BUDDY2026`. Dann kann sich nur registrieren, wer ihn kennt. Die Datenbank prüft ihn, die Prüfung lässt sich also nicht umgehen. Ist das Feld leer, kann sich jede Person mit dem Link registrieren.
 
 Die Punkte fürs Matching stehen oben in `index.html` unter `POINTS` und lassen sich dort ändern. Dasselbe gilt für die Auswahllisten (`CITIES`, `FIELDS`, `INTERESTS`).
 
@@ -50,11 +54,25 @@ Sonst führen die Links aus den E-Mails nicht zurück zur Website.
 
 ### Schritt 4: E-Mail-Versand einrichten
 
-Ohne eigenen Mail-Server verschickt Supabase nur sehr wenige E-Mails pro Stunde und nur an Mitglieder deines Supabase-Teams. Für echte Anmeldungen:
+Ohne eigenen Mail-Dienst verschickt Supabase nur sehr wenige E-Mails pro Stunde und **nur an Mitglieder deines Supabase-Teams**. Andere bekämen keinen Login-Link. So richtest du [Brevo](https://www.brevo.com) ein (kostenlos, 300 E-Mails am Tag, Sitz in der EU):
 
-1. Ein kostenloses Konto bei einem Mail-Dienst anlegen, zum Beispiel [Brevo](https://www.brevo.com) oder [Resend](https://resend.com).
-2. In Supabase unter **Authentication → Emails → SMTP Settings** die Zugangsdaten des Dienstes eintragen.
-3. Optional unter **Authentication → Emails → Templates** die Texte der Login-E-Mail auf Deutsch anpassen.
+1. **Brevo-Konto anlegen** auf brevo.com („Sign up free“).
+2. **Absender bestätigen:** In Brevo oben rechts auf den Namen klicken, dann **Senders, domains & dedicated IPs → Senders → Add a sender**. Die E-Mail-Adresse eintragen, von der die Login-Links kommen sollen, und den Bestätigungslink in deinem Postfach anklicken.
+   Am zuverlässigsten ist eine Adresse mit eigener Domain, zum Beispiel von der Stiftung. Bei Gmail- oder GMX-Adressen landen die E-Mails öfter im Spam.
+3. **SMTP-Schlüssel holen:** In Brevo **SMTP & API → Tab „SMTP“ → Generate a new SMTP key**. Den Schlüssel sofort kopieren, er wird nur einmal angezeigt. Auf derselben Seite stehen **SMTP server**, **Port** und **Login**.
+4. **In Supabase eintragen:** **Authentication → Emails → SMTP Settings → Enable custom SMTP** einschalten:
+   | Feld | Wert |
+   |---|---|
+   | Sender email | die in Schritt 2 bestätigte Adresse |
+   | Sender name | Buddy-Programm |
+   | Host | `smtp-relay.brevo.com` |
+   | Port | `587` |
+   | Username | der **Login** aus Brevo (sieht aus wie `xxxx@smtp-brevo.com`) |
+   | Password | der SMTP-Schlüssel aus Schritt 3 |
+
+   Dann **Save**.
+5. **Testen** mit einer E-Mail-Adresse, die *nicht* in deinem Supabase-Team ist: auf der Website registrieren und prüfen, ob der Link ankommt (auch im Spam-Ordner).
+6. Optional unter **Authentication → Emails → Templates** die Texte der Login-E-Mail auf Deutsch anpassen.
 
 ### Schritt 5: Dich als Admin eintragen
 
@@ -77,7 +95,7 @@ Ohne eigenen Mail-Server verschickt Supabase nur sehr wenige E-Mails pro Stunde 
 ### Schritt 7: Farben und Rechtliches
 
 - **Farben:** Oben in `index.html` stehen `--blue`, `--blue-deep` und `--yellow`. Dort die genauen Farbcodes des Stipendiums eintragen (zum Beispiel `#1C3F94`). Außerdem kommt Gelb im Logo vor (`fill="#F7C62F"` im `<svg>`).
-- **Datenschutz und Impressum:** Links bei `DATENSCHUTZ_URL` und `IMPRESSUM_URL` eintragen. Weil Namen und E-Mail-Adressen gespeichert werden, sollte die Datenschutzerklärung vor dem Start mit eurer Stiftung abgesprochen sein.
+- **Datenschutz und Impressum:** Die Vorlagen `datenschutz.html` und `impressum.html` öffnen und alle gelb markierten Stellen ausfüllen (auf github.com: Datei öffnen, Stift-Symbol, ändern, „Commit changes“). Danach die Markierung `<mark class="todo">…</mark>` entfernen und nur den Text stehen lassen. Die Vorlagen sind keine Rechtsberatung. Bitte vor dem Start mit eurer Stiftung abstimmen.
 
 ---
 

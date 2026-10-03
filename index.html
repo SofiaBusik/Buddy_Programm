@@ -4,9 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Buddy-Programm</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
 <style>
 /* ===== Farben: hier später die genauen Stipendiums-Farbcodes eintragen ===== */
 :root{
@@ -201,7 +199,7 @@ legend{margin-bottom:8px;padding:0}
 <footer class="wrap foot" id="foot"></footer>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="vendor/supabase.js"></script>
 <script>
 /* =====================================================================
    1. HIER DEINE SUPABASE-DATEN EINTRAGEN
@@ -212,8 +210,8 @@ const SUPABASE_URL = "https://jelbgavgsrqtjqvbpjtn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_3PB1EKLilMye9B-udZ9Hzg_6Gw-kw97";
 
 /* Links zu Datenschutzerklärung und Impressum (später eintragen, sonst leer lassen) */
-const DATENSCHUTZ_URL = "";
-const IMPRESSUM_URL = "";
+const DATENSCHUTZ_URL = "datenschutz.html";
+const IMPRESSUM_URL = "impressum.html";
 
 /* ===== 2. Auswahllisten fürs Formular (kannst du anpassen) ===== */
 const CITIES=["Berlin","Potsdam","Hamburg","München","Köln","Leipzig","Frankfurt"];
@@ -249,6 +247,7 @@ const CONFIGURED=!SUPABASE_URL.includes("DEIN-PROJEKT")&&!SUPABASE_KEY.includes(
 const sb=(CONFIGURED&&window.supabase)?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{flowType:"implicit",detectSessionInUrl:true,persistSession:true}}):null;
 
 let authUser=null,profile=null,isAdmin=false,people=[],matches=[],loading=true,loadError="";
+let inviteRequired=false,inviteCode="";
 
 const byId=id=>people.find(p=>p.id===id);
 const neue=()=>people.filter(p=>p.role==="neu");
@@ -287,6 +286,8 @@ function plan(){
 async function loadData(){
   const {data:{session}}=await sb.auth.getSession();
   authUser=session?.user||null;
+  const inv=await sb.rpc("invite_required");
+  inviteRequired=!inv.error&&inv.data===true; // ohne aktuelle schema.sql: kein Code nötig
   if(!authUser){profile=null;isAdmin=false;people=[];matches=[];return;}
   const [a,p,m]=await Promise.all([
     sb.rpc("is_admin"),
@@ -296,6 +297,10 @@ async function loadData(){
   const err=a.error||p.error||m.error;if(err)throw err;
   isAdmin=a.data===true;people=p.data||[];matches=m.data||[];
   profile=people.find(x=>x.id===authUser.id)||null;
+  if(isAdmin){
+    const st=await sb.from("settings").select("*");
+    inviteCode=(st.data||[]).find(r=>r.key==="invite_code")?.value||"";
+  }
 }
 let shownLoginToast=false;
 async function refresh(){
@@ -359,6 +364,9 @@ function formHTML(role,p){
   const ds=DATENSCHUTZ_URL?` Mehr dazu in der <a href="${esc(DATENSCHUTZ_URL)}" target="_blank" rel="noopener">Datenschutzerklärung</a>.`:"";
   return `<form class="card form" id="regform" novalidate data-role="${role}"${edit?' data-mode="edit"':""}>
   <h3>${edit?"Deine Angaben ändern":"Anmeldung als "+(role==="neu"?"neue:r Stipendiat:in":"Buddy")}</h3>
+  ${!edit&&inviteRequired?`<div class="field narrow" style="margin:0 0 18px"><label for="f-code">Einladungscode</label>
+    <input id="f-code" type="text" name="invite_code" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <p class="muted" style="margin:0;font-size:.9rem">Den Code bekommst du vom Buddy-Team oder aus der Einladung zum Programm.</p>${err("invite_code")}</div>`:""}
   <div class="grid">
     <div class="field"><label for="f-name">Name</label><input id="f-name" type="text" name="name" autocomplete="name" value="${esc(p?.name)}">${err("name")}</div>
     ${emailField}
@@ -441,7 +449,16 @@ function renderAdmin(){
   h+=matches.length?`<div class="pairs">${matches.map(pairRow).join("")}</div>`:`<p class="muted">Noch keine Paare bestätigt.</p>`;
   h+=`<h2 class="sub">Buddys</h2>`;
   h+=buddies().length?`<div class="pairs">${buddies().map(b=>`<div class="card pair"><span class="av b sm">${ini(b.name)}</span><div class="ptext"><strong>${esc(b.name)}</strong><span class="muted">${desc(b)}, ${matchesOfBuddy(b.id).length} von ${b.capacity} Plätzen belegt</span></div>${previewBtn(b)}<a class="btn ghost small" href="mailto:${esc(b.email)}">E-Mail</a></div>`).join("")}</div>`:`<p class="muted">Noch hat sich niemand als Buddy registriert.</p>`;
-  return h;
+  return h+inviteCard();
+}
+function inviteCard(){
+  return `<h2 class="sub">Einladungscode</h2><form class="card" id="inviteform" novalidate>
+    <p style="margin:0 0 12px">${inviteCode
+      ?`Nur wer diesen Code kennt, kann sich registrieren. Schick ihn an eure Stipendiat:innen, zum Beispiel zusammen mit dem Link.`
+      :`<strong>Kein Code gesetzt:</strong> Jede Person mit dem Link kann sich registrieren.`}</p>
+    <div class="langpick"><input id="f-invite" name="code" type="text" value="${esc(inviteCode)}" placeholder="z. B. BUDDY2026" autocomplete="off" aria-label="Einladungscode">
+    <button class="btn small" type="submit">Speichern</button></div>
+    <p class="muted" style="margin:8px 0 0;font-size:.9rem">Groß- und Kleinschreibung spielt keine Rolle. Feld leeren und speichern, um den Code abzuschalten. Wer schon registriert ist, bleibt dabei.</p></form>`;
 }
 function adminRow(n,rec){
   const others=buddies().filter(b=>freeSlots(b)>0).map(b=>({b,s:score(n,b)})).sort((a,c)=>c.s.pts-a.s.pts);
@@ -582,6 +599,17 @@ document.addEventListener("click",async e=>{
   }
 });
 
+async function saveInvite(f){
+  const code=(new FormData(f).get("code")||"").trim().slice(0,60);
+  busy(f,true,"Wird gespeichert …");
+  const {error}=code
+    ?await sb.from("settings").upsert({key:"invite_code",value:code})
+    :await sb.from("settings").delete().eq("key","invite_code");
+  busy(f,false);
+  if(error){toast("Fehler: "+error.message);return;}
+  await refresh();
+  toast(code?`Einladungscode „${code}“ gespeichert.`:"Einladungscode abgeschaltet. Jede:r kann sich registrieren.");
+}
 async function handleLogin(f){
   const email=(new FormData(f).get("email")||"").trim().toLowerCase();
   ui.pendingEmail=email;
@@ -609,8 +637,15 @@ async function handleRegister(f){
   if(edit&&role==="buddy"&&d.capacity<matchesOfBuddy(authUser.id).length)errs.capacity="Du begleitest schon mehr Personen, als du hier angibst.";
   if(!edit&&!fd.get("consent"))errs.consent="Ohne dein Einverständnis können wir dich nicht zuordnen.";
   const show=()=>{f.querySelectorAll(".err").forEach(p=>{const m=errs[p.dataset.err];p.textContent=m||"";p.hidden=!m});f.querySelector(".err:not([hidden])")?.scrollIntoView({block:"center"});};
+  const code=(fd.get("invite_code")||"").trim();
+  if(!edit&&inviteRequired&&!code)errs.invite_code="Bitte gib den Einladungscode ein.";
   if(Object.keys(errs).length){show();return;}
   show();
+  if(!edit&&inviteRequired){
+    const {data,error}=await sb.rpc("check_invite",{c:code});
+    if(!error&&data!==true){errs.invite_code="Der Einladungscode stimmt nicht. Frag beim Buddy-Team nach.";show();return;}
+    d.invite_code=code;
+  }
   busy(f,true,edit?"Wird gespeichert …":"Wird gesendet …");
   if(edit){
     const {role:_,...changes}=d;
@@ -635,6 +670,7 @@ app.addEventListener("submit",e=>{
   e.preventDefault();
   if(e.target.id==="loginform")handleLogin(e.target);
   else if(e.target.id==="regform")handleRegister(e.target);
+  else if(e.target.id==="inviteform")saveInvite(e.target);
 });
 
 if(sb){
