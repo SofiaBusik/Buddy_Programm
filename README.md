@@ -27,6 +27,7 @@ Die Punkte fürs Matching stehen oben in `index.html` unter `POINTS` und lassen 
 1. Auf [supabase.com](https://supabase.com) ein kostenloses Projekt anlegen. Als Region **Frankfurt (eu-central-1)** wählen, wegen des Datenschutzes.
 2. **Project Settings → API Keys:** die **Project URL** und den **Publishable key** kopieren und oben in `index.html` bei `SUPABASE_URL` und `SUPABASE_KEY` eintragen. Den **Secret key** nie in eine Datei schreiben.
 3. **SQL Editor → New query:** den ganzen Inhalt von `supabase/schema.sql` einfügen und auf **Run** klicken.
+   Bricht es mit einem Fehler wie `column "user_id" does not exist` ab, gibt es noch alte Test-Tabellen. Dann zuerst `supabase/reset.sql` ausführen (löscht die alten Buddy-Tabellen) und danach `schema.sql` noch einmal.
 
 > Der Publishable key darf öffentlich auf GitHub stehen. Die Daten schützen die Zugriffsregeln aus `schema.sql`: Jede Person sieht nur sich selbst und ihren Buddy, nur Admins sehen alle. Deshalb muss Schritt 1.3 unbedingt ausgeführt sein, bevor sich jemand anmeldet.
 
